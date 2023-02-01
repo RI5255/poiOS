@@ -5,6 +5,8 @@
 #define TRUE	1
 #define FALSE	0
 
+#include "efi.h"
+
 VOID putc(UINT16 c);
 VOID puts(UINT16 *s);
 UINT16 getc(void);
