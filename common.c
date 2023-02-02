@@ -1,6 +1,7 @@
 #include "efi.h"
 #include "common.h"
 
+#define MAX_STR_BUF 100
 
 VOID putc(UINT16 c) {
     UINT16 str[2];
@@ -11,6 +12,24 @@ VOID putc(UINT16 c) {
 
 VOID puts(UINT16 *s) {
     ST->ConOut->OutputtString(ST->ConOut, s);
+}
+
+// put hex
+VOID puth(UINT64 val, UINT8 num_digit) {
+    UINT16 unicode_val;
+    UINT16 str[MAX_STR_BUF];
+
+    for(int i = num_digit - 1; 0 <= i; i--) {
+        unicode_val = (UINT16)(val & 0x0f); // 16進数一桁は4bit
+        if(unicode_val < 0xa)
+            str[i] = unicode_val + L'0';
+        else 
+            str[i] = (unicode_val - 0xa) + L'A';
+        val >>= 4;
+    }
+    str[num_digit] = L'\0';
+
+    puts(str);
 }
 
 UINT16 getc(VOID) {

@@ -10,6 +10,7 @@ typedef unsigned int UINT32;
 typedef unsigned long long UINT64;
 typedef unsigned short CHAR16;
 typedef void VOID;
+typedef unsigned char  BOOLEAN;
 typedef UINTN EFI_STATUS;
 typedef VOID* EFI_HANDLE;
 typedef VOID* EFI_EVENT;
@@ -174,8 +175,49 @@ typedef struct {
     EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE *Mode;
 } EFI_GRAPHICS_OUTPUT_PROTOCOL;
 
+// EFI_SIMPLE_POINTER_PROTOCOL
+struct _EFI_SIMPLE_POINTER_PROTOCOL;
+
+typedef struct {
+    UINT64 ResolutionX;
+    UINT64 ResolutionY;
+    UINT64 ResolutionZ;
+    BOOLEAN LeftButton;
+    BOOLEAN RightButton;
+} EFI_SIMPLE_POINTER_MODE;
+
+typedef struct {
+    INT32 RelativeMovementX;
+    INT32 RelativeMovementY;
+    INT32 RelativeMovementZ;
+    BOOLEAN LeftButton;
+    BOOLEAN RightButton;
+} EFI_SIMPLE_POINTER_STATE;
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_SIMPLE_POINTER_GET_STATE) (
+    IN struct _EFI_SIMPLE_POINTER_PROTOCOL *This,
+    OUT EFI_SIMPLE_POINTER_STATE *State
+);
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_SIMPLE_POINTER_RESET) (
+    IN struct _EFI_SIMPLE_POINTER_PROTOCOL *This,
+    IN BOOLEAN ExtendedVerification
+);
+
+typedef struct _EFI_SIMPLE_POINTER_PROTOCOL{
+    EFI_SIMPLE_POINTER_RESET Reset;
+    EFI_SIMPLE_POINTER_GET_STATE GetState;
+    EFI_EVENT WaitForInput;
+    EFI_SIMPLE_POINTER_MODE *Mode;
+} EFI_SIMPLE_POINTER_PROTOCOL;
+
 extern EFI_SYSTEM_TABLE *ST;
 extern EFI_GRAPHICS_OUTPUT_PROTOCOL *GOP;
+extern EFI_SIMPLE_POINTER_PROTOCOL *SPP;
 void efi_init(EFI_SYSTEM_TABLE *SystemTable);
 
 #endif

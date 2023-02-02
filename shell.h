@@ -2,5 +2,6 @@
 #define _SHELL_H 
 
 void shell(void);
+void pstat(void);
 
 #endif 

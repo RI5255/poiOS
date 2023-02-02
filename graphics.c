@@ -4,9 +4,10 @@
 const EFI_GRAPHICS_OUTPUT_BLT_PIXEL white = {0xff, 0xff, 0xff, 0xff};
 
 void draw_pixel(unsigned int x, unsigned int y, EFI_GRAPHICS_OUTPUT_BLT_PIXEL color) {
-    UINT32 hr = GOP->Mode->Info->HorizontalResolution;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL *base = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)GOP->Mode->FrameBufferBase;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL *p = base + (hr * y) + x;
+    UINT32 w = GOP->Mode->Info->PixelsPerScanLine;
+    UINT8 *base = (UINT8*)GOP->Mode->FrameBufferBase;
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL *p = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*)base + (w * y) + x;
+
     p->Blue = color.Blue;
     p->Green = color.Green;
     p->Red = color.Red;
