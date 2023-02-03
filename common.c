@@ -15,10 +15,12 @@ VOID puts(UINT16 *s) {
 }
 
 // put hex
-VOID puth(UINT64 val, UINT8 num_digit) {
+VOID puth(UINT64 val, UINT8 bytes) {
     UINT16 unicode_val;
     UINT16 str[MAX_STR_BUF];
 
+    int num_digit = 2 * bytes;
+    
     for(int i = num_digit - 1; 0 <= i; i--) {
         unicode_val = (UINT16)(val & 0x0f); // 16進数一桁は4bit
         if(unicode_val < 0xa)

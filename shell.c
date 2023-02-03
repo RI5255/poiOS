@@ -47,6 +47,8 @@ void shell(void) {
             gui();
         else if(!strcmp(L"pstat", cmd))
             pstat();
+        else if(!strcmp(L"clear", cmd))
+            ST->ConOut->ClearScreen(ST->ConOut);
         else 
             puts(L"Command not found.\r\n");
     }
