@@ -2,7 +2,7 @@
 #include "shell.h"
 
 // entry point
-void efi_main(void *ImageHandle __attribute__((unused)), EFI_SYSTEM_TABLE *SystemTable) {
-    efi_init(SystemTable);
-    shell();
+void efi_main(void *image_handle, EFI_SYSTEM_TABLE *system_table) {
+    efi_init(image_handle, system_table);
+    shell(image_handle);
 }

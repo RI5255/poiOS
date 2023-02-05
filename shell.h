@@ -2,7 +2,7 @@
 #define _SHELL_H 
 
 void pstat(void);
-int ls(void);
-void shell(void);
+int ls(EFI_HANDLE image_handle);
+void shell(EFI_HANDLE image_handle);
 
 #endif 

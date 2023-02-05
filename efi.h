@@ -67,6 +67,12 @@ typedef struct _EFI_SIMPLE_TEXT_INPUT_PROTOCOL {
 // EIF_BOOT_SERVICES
 typedef 
 EFI_STATUS
+(EFIAPI *EFI_FREE_POOL) (
+    IN VOID *Buffer
+);
+
+typedef 
+EFI_STATUS
 (EFIAPI *EFI_WAIT_FOR_EVENT) (
     IN UINTN NumberOfEvents,
     IN EFI_EVENT *Event,
@@ -97,23 +103,70 @@ EFI_STATUS
     IN CHAR16 *WatchdogData OPTIONAL
 );
 
-typedef struct {
-    char _pad1[96];
-    
-    // Event & Timer Services
-    EFI_WAIT_FOR_EVENT WaitForEvent;
-    char _pad2[24];
+typedef enum {
+    AllHandles,
+    ByRegisterNotify,
+    ByProtocol
+} EFI_LOCATE_SEARCH_TYPE;
 
-    char _pad3[112];
+typedef 
+EFI_STATUS 
+(EFIAPI *EFI_LOCATE_HANDLE_BUFFER) (
+    IN EFI_LOCATE_SEARCH_TYPE SearchType,
+    IN EFI_GUID *Protocol OPTIONAL,
+    IN VOID *SearchKey OPTIONAL,
+    OUT UINTN *NumHandles,
+    OUT EFI_HANDLE **Buffer
+);
+
+#define EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL 0x00000001
+
+/* 
+@param Handle オープンするプロトコルで扱う対象のハンドルを指定
+@param Protocol プロトコルのGUID
+@param Interface プロトコル構造体のポインタを格納するための変数
+@param AgentHandle  OpenProtocolを呼んでいるイメージのハンドル。つまり自分自身のイメージハンドル
+@param ConrtollerHandle OpenProtocolを呼んでいるのがUEFI driverである場合に指定する。それ以外はNULL 
+
+*/
+typedef 
+EFI_STATUS 
+(EFIAPI *EFI_OPEN_PROTOCOL) (
+    IN EFI_HANDLE Handle,
+    IN EFI_GUID *Protocol,
+    OUT VOID **Interface OPTIONAL,
+    IN EFI_HANDLE AgentHandle,
+    IN EFI_HANDLE ControllerHandle, 
+    IN UINT32 Attributes 
+);
+
+typedef struct {
+    char _pad1[40];
+
+    // Memory Services
+    char _pad2[32];
+    EFI_FREE_POOL FreePool;
+
+    // Event & Timer Services
+    char _pad3[16];
+    EFI_WAIT_FOR_EVENT WaitForEvent;
+    char _pad4[24];
+
+    char _pad5[112];
 
     // Miscellaeous Services 
-    char _pad4[16];
+    char _pad6[16];
     EFI_SET_WATCHDOG_TIMER SetWatchdogTimer;
 
-    char _pad5[40];
+    char _pad7[16];
+
+    // Open and Close Protocol Services
+    EFI_OPEN_PROTOCOL OpenProtocol;
+    char _pad8[16];
 
     // Library Services
-    char _pad6[16];
+    char _pad9[8];
+    EFI_LOCATE_HANDLE_BUFFER LocateHandleBuffer;
     EFI_LOCATE_PROTOCOL LocateProtocol;
 
 } EFI_BOOT_SERVICES;
@@ -309,11 +362,59 @@ typedef struct {
     CHAR16 FileName[];
 } EFI_FILE_INFO;
 
+// EFI_LOADED_IMAGE_PROTOCOL 
+typedef enum {
+    EfiReservedMemoryType,
+    EfiLoaderCode,
+    EfiLoaderData,
+    EfiBootServicesCode,
+    EfiBootServicesData,
+    EfiRuntimeServicesCode,
+    EfiRuntimeServicesData,
+    EfiConventionalMemory,
+    EfiUnusableMemory,
+    EfiACPIReclaimMemory,
+    EfiACPIMemoryNVS,
+    EfiMemoryMappedIO,
+    EfiMemoryMappedIOPortSpace,
+    EfiPalCode,
+    EfiPersistentMemory,
+    EfiUnacceptedMemoryType,
+    EfiMaxMemoryType
+} EFI_MEMORY_TYPE;
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_IMAGE_UNLOAD) (
+    IN EFI_HANDLE ImageHandle
+);
+
+typedef struct {
+    UINT32 Revision;
+    EFI_HANDLE ParentHandle;
+    EFI_SYSTEM_TABLE *SystemTable;
+    
+    // Source location of the image
+    EFI_HANDLE DeviceHandle;
+    VOID *Reserved;
+
+    // Image`s load options
+    UINT32 LoadOptionsSize;
+    VOID *LoadOptions;
+
+    // Location where image was loaded
+    VOID *ImageBase;
+    UINT64 ImageSize;
+    EFI_MEMORY_TYPE  ImageCodeType;
+    EFI_MEMORY_TYPE ImageDataType;
+    EFI_IMAGE_UNLOAD Unload;
+} EFI_LOADED_IMAGE_PROTOCOL;
 
 extern EFI_SYSTEM_TABLE *ST;
 extern EFI_GRAPHICS_OUTPUT_PROTOCOL *GOP;
 extern EFI_SIMPLE_POINTER_PROTOCOL *SPP;
-extern EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SFSP;
-void efi_init(EFI_SYSTEM_TABLE *SystemTable);
+extern EFI_GUID GOP_GUID, SPP_GUID, SFSP_GUID, LIP_GUID;
+
+void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table);
 
 #endif

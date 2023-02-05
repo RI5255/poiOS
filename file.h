@@ -5,11 +5,14 @@
 #define MAX_FILE_NUM 10
 #define MAX_FILE_BUF 1024
 
+#include "efi.h"
 
 struct FILE {
     unsigned short name[MAX_FILE_NAME_LEN];
 };
 
 extern struct FILE file_list[MAX_FILE_NUM];
+
+EFI_STATUS OpenRootDir(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL ** root);
 
 #endif 

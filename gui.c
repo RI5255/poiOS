@@ -36,7 +36,8 @@ void gui(void) {
     struct RECT r = {10, 10, 20, 20};
     int px = 0, py = 0;
     BOOLEAN is_highlighted = FALSE;
-    UINTN status, waitidx;
+    EFI_STATUS status;
+    UINTN waitidx;
     EFI_SIMPLE_POINTER_STATE s;
 
     ST->ConOut->ClearScreen(ST->ConOut);

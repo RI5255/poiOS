@@ -33,16 +33,17 @@ void pstat(void) {
     }
 }
 
-int ls(void) {
-    UINTN status, buf_size;
-    EFI_FILE_PROTOCOL *root;
+int ls(EFI_HANDLE image_handle) {
+    EFI_STATUS status;
+    UINTN buf_size;
     EFI_FILE_INFO *file_info;
+    EFI_FILE_PROTOCOL *root;
     unsigned char file_buf[MAX_FILE_BUF];
     int idx = 0;
     int file_num;
 
-    status = SFSP->OpenVolume(SFSP, &root);
-    assert(status, L"SFSP->OpenVolume");
+    status = OpenRootDir(image_handle, &root);
+    assert(status, L"OpenRootDir");
 
     while(1) {
         buf_size = MAX_FILE_BUF;
@@ -66,7 +67,7 @@ int ls(void) {
     return file_num;
 }
 
-void shell(void) {
+void shell(EFI_HANDLE image_handle) {
     UINT16 cmd[MAX_COMMAND_LEN];
     struct RECT r = {10, 10, 100, 200};
     while(TRUE) {
@@ -84,7 +85,7 @@ void shell(void) {
         else if(!strcmp(L"clear", cmd))
             ST->ConOut->ClearScreen(ST->ConOut);
         else if(!strcmp(L"ls", cmd))
-            ls();
+            ls(image_handle);
         else 
             puts(L"Command not found.\r\n");
     }
