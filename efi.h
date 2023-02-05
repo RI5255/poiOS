@@ -19,6 +19,7 @@ typedef VOID* EFI_EVENT;
 #define IN 
 #define OUT 
 #define OPTIONAL
+#define CONST const 
 
 // EFI_SYMPLE_TEXT_OUTPUT_PROTOCOL
 struct _EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL;
@@ -410,10 +411,31 @@ typedef struct {
     EFI_IMAGE_UNLOAD Unload;
 } EFI_LOADED_IMAGE_PROTOCOL;
 
+// EFI_DEVICE_PATH_PROTOCOL
+typedef struct {
+    UINT8 Type;
+    UINT8 SubType;
+    UINT8 Length[2];
+} EFI_DEVICE_PATH_PROTOCOL;
+
+typedef 
+CHAR16 *
+(EFIAPI *EFI_DEVICE_PATH_TO_TEXT_PATH) (
+    IN CONST EFI_DEVICE_PATH_PROTOCOL *DevicePath,
+    IN BOOLEAN DisplayOnly,
+    IN BOOLEAN AllowShortcuts
+);
+
+typedef struct {
+    char _pad[8];
+    EFI_DEVICE_PATH_TO_TEXT_PATH ConvertDevicePathToText;
+} EFI_DEVICE_PATH_TO_TEXT_PROTOCOL;
+
 extern EFI_SYSTEM_TABLE *ST;
 extern EFI_GRAPHICS_OUTPUT_PROTOCOL *GOP;
 extern EFI_SIMPLE_POINTER_PROTOCOL *SPP;
-extern EFI_GUID GOP_GUID, SPP_GUID, SFSP_GUID, LIP_GUID;
+extern EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DPTTP;
+extern EFI_GUID GOP_GUID, SPP_GUID, SFSP_GUID, LIP_GUID, DPP_GUID, DPTTP_GUID;
 
 void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table);
 
