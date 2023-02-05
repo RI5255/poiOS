@@ -45,8 +45,8 @@ UINT16 getc(VOID) {
     return key.UnicodeChar;
 }
 
-INT32 gets(UINT16 *buf, UINT16 buf_size) {
-    INT32 i;
+UINT32 gets(UINT16 *buf, UINT32 buf_size) {
+    UINT32 i;
     
     for(i = 0; i < buf_size - 1;) {
         buf[i] = getc();
@@ -84,4 +84,21 @@ INT32 strcmp(const UINT16 *s1, const UINT16 *s2) {
     }else
         return (INT32)(*s1 - * s2);
     
+}
+
+VOID strncpy(UINT16 *dst, UINT16 *src, UINT64 n) {
+	while (n--)
+		*dst++ = *src++;
+}
+
+
+// 関数は成功すると0を返すように実装されている。0でなければエラーメッセージを出して無限ループする。
+VOID assert(UINTN status, UINT16 *message) {
+    if(status) {
+        puts(message);
+        puts(L":");
+        puth(status, sizeof(UINTN));
+        puts(L"\r\n");
+        while(1);
+    }
 }

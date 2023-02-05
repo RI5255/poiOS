@@ -4,6 +4,7 @@
 // basic data types (defined in p.20)
 typedef unsigned long long UINTN;
 typedef unsigned char UINT8;
+typedef short INT16;
 typedef unsigned short UINT16;
 typedef int INT32;
 typedef unsigned int UINT32;
@@ -215,9 +216,104 @@ typedef struct _EFI_SIMPLE_POINTER_PROTOCOL{
     EFI_SIMPLE_POINTER_MODE *Mode;
 } EFI_SIMPLE_POINTER_PROTOCOL;
 
+// EFI_FILE_PROTOCOL
+struct _EFI_FILE_PROTOCOL;
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_FILE_OPEN) (
+    IN struct _EFI_FILE_PROTOCOL *This,
+    OUT struct _EFI_FILE_PROTOCOL **NewHandle,
+    IN CHAR16 *FileName,
+    IN UINT64 OpenMode,
+    IN UINT64 Attributes
+);
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_FILE_CLOSE) (
+    IN struct _EFI_FILE_PROTOCOL *This
+);
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_FILE_READ) (
+    IN struct _EFI_FILE_PROTOCOL *This,
+    IN OUT UINTN *BufferSize,
+    OUT VOID *Buffer
+);
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_FILE_WRITE) (
+    IN struct _EFI_FILE_PROTOCOL *This,
+    IN OUT UINTN *BufferSize,
+    IN VOID *Buffer
+);
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_FILE_FLUSH) (
+    IN struct _EFI_FILE_PROTOCOL *This
+);
+
+typedef struct _EFI_FILE_PROTOCOL {
+    UINT64 Revision;
+    EFI_FILE_OPEN Open;
+    EFI_FILE_CLOSE Close;
+    char _pad1[8];
+    EFI_FILE_READ Read;
+    EFI_FILE_WRITE Write;
+    char _pad2[32];
+    EFI_FILE_FLUSH Flush;
+}EFI_FILE_PROTOCOL;
+
+// EFI_SIMLE_FILE_SYSTEM_PROTOCOL
+struct _EFI_SIMPLE_FILE_SYSTEM_PROTOCOL;
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_OPEN_VOLUME) (
+    IN struct _EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *This,
+    OUT EFI_FILE_PROTOCOL **Root
+);
+
+typedef struct _EFI_SIMPLE_FILE_SYSTEM_PROTOCOL{
+    UINT64 Revision;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_OPEN_VOLUME OpenVolume;
+} EFI_SIMPLE_FILE_SYSTEM_PROTOCOL;
+
+// EFI_FILE_INFO
+typedef struct {
+    UINT16 Year;
+    UINT8 Month;
+    UINT8 Day;
+    UINT8 Hour;
+    UINT8 Minute;
+    UINT8 Second;
+    UINT8 Pad1;
+    UINT32 Nanosecond;
+    INT16 TimeZone;
+    UINT8 Daylight;
+    UINT8 Pad2;
+} EFI_TIME;
+
+typedef struct {
+    UINT64 Size;
+    UINT64 FileSize;
+    UINT64 PhysicalSize;
+    EFI_TIME CreateTime;
+    EFI_TIME LastAccessTime;
+    EFI_TIME ModificationTime;
+    UINT64 Attribute;
+    CHAR16 FileName[];
+} EFI_FILE_INFO;
+
+
 extern EFI_SYSTEM_TABLE *ST;
 extern EFI_GRAPHICS_OUTPUT_PROTOCOL *GOP;
 extern EFI_SIMPLE_POINTER_PROTOCOL *SPP;
+extern EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SFSP;
 void efi_init(EFI_SYSTEM_TABLE *SystemTable);
 
 #endif

@@ -3,6 +3,7 @@
 #include "shell.h"
 #include "graphics.h"
 #include "gui.h"
+#include "file.h"
 
 #define MAX_COMMAND_LEN 100
 
@@ -32,6 +33,39 @@ void pstat(void) {
     }
 }
 
+int ls(void) {
+    UINTN status, buf_size;
+    EFI_FILE_PROTOCOL *root;
+    EFI_FILE_INFO *file_info;
+    unsigned char file_buf[MAX_FILE_BUF];
+    int idx = 0;
+    int file_num;
+
+    status = SFSP->OpenVolume(SFSP, &root);
+    assert(status, L"SFSP->OpenVolume");
+
+    while(1) {
+        buf_size = MAX_FILE_BUF;
+        status = root->Read(root, &buf_size, (VOID *)file_buf);
+        assert(status, L"root->Read");
+        if(!buf_size) break; // Read関数はentryが無くなると0を返す。
+
+        file_info = (EFI_FILE_INFO *)file_buf;
+        strncpy(file_list[idx].name, file_info->FileName, MAX_FILE_NAME_LEN - 1);
+        file_list[idx].name[MAX_FILE_NAME_LEN - 1] = L'\0';
+        puts(file_list[idx].name);
+        puts(L" ");
+        
+        idx++;
+    }
+    puts(L"\r\n");
+    file_num = idx;
+
+    root->Close(root);
+
+    return file_num;
+}
+
 void shell(void) {
     UINT16 cmd[MAX_COMMAND_LEN];
     struct RECT r = {10, 10, 100, 200};
@@ -49,6 +83,8 @@ void shell(void) {
             pstat();
         else if(!strcmp(L"clear", cmd))
             ST->ConOut->ClearScreen(ST->ConOut);
+        else if(!strcmp(L"ls", cmd))
+            ls();
         else 
             puts(L"Command not found.\r\n");
     }
