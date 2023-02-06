@@ -3,6 +3,7 @@
 
 #include "efi.h"
 
+void dialogue_get_file_name(int idx);
 void pstat(void);
 int ls(EFI_HANDLE image_handle);
 void cat(EFI_HANDLE image_handle, UINT16 *file_name);

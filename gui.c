@@ -75,7 +75,7 @@ void gui(EFI_HANDLE image_handle) {
     EFI_STATUS status;
     UINTN waitidx;
     EFI_SIMPLE_POINTER_STATE s;
-    BOOLEAN prev_lb = FALSE;
+    BOOLEAN prev_lb = FALSE, prev_rb = FALSE, executed_rb;
 
     ST->ConOut->ClearScreen(ST->ConOut);
     SPP->Reset(SPP, FALSE);
@@ -101,6 +101,9 @@ void gui(EFI_HANDLE image_handle) {
 
             put_cursor(px, py);
 
+            // 右クリックの実行済みフラグをクリア
+            executed_rb = FALSE;
+
             // ファイルアイコンの処理
             for(int i = 0; i < file_num; i++) {
                 if(is_in_rect(px, py, file_list[i].rect)) {
@@ -112,6 +115,11 @@ void gui(EFI_HANDLE image_handle) {
                         cat_gui(image_handle, file_list[i].name);
                         file_num = ls_gui(image_handle);
                     }
+                    if(prev_rb && !s.RightButton) {
+                        edit(image_handle, file_list[i].name);
+                        file_num = ls_gui(image_handle);
+                        executed_rb = TRUE;
+                    }
                 }else {
                     if(file_list[i].is_highlighted) {
                         draw_rect(file_list[i].rect, white);
@@ -120,8 +128,18 @@ void gui(EFI_HANDLE image_handle) {
                 }
             }
 
-            // マウスの左ボタンの前回の状態を更新
+            // ファイル新規作成・編集(アイコン外を右クリックした場合)
+            if((prev_rb && !s.RightButton) && !executed_rb) {
+                dialogue_get_file_name(file_num);
+                edit(image_handle, file_list[file_num].name);
+                ST->ConOut->ClearScreen(ST->ConOut);
+                puts(file_list[file_num].name);
+                file_num = ls_gui(image_handle);
+            }
+
+            // マウスの左右ボタンの前回の状態を更新
             prev_lb = s.LeftButton;
+            prev_rb = s.RightButton;
         }
     }
 }

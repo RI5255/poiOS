@@ -7,6 +7,24 @@
 
 #define MAX_COMMAND_LEN 100
 
+void dialogue_get_file_name(int idx) {
+    int i;
+
+    ST->ConOut->ClearScreen(ST->ConOut);
+
+    puts(L"New File Name: ");
+    
+    for(i = 0; i < MAX_FILE_NAME_LEN; i++) {
+        file_list[idx].name[i] = getc();
+        if (file_list[idx].name[i] != L'\r')
+			putc(file_list[idx].name[i]);
+        else 
+            break;
+    }
+
+    file_list[idx].name[i] = L'\0';
+}
+
 void pstat(void) {
     UINTN status, waitidx;
     EFI_SIMPLE_POINTER_STATE s;
@@ -118,7 +136,7 @@ void edit(EFI_HANDLE image_handle, CHAR16 *file_name) {
     status = OpenRootDir(image_handle, &root);
     assert(status, L"OpenRootDir");
 
-    status = root->Open(root, &file, file_name, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+    status = root->Open(root, &file, file_name, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
     assert(status, L"root->Open");
 
     status = file->Write(file, &buf_size, (VOID *)file_buf);
