@@ -38,7 +38,7 @@ int ls(EFI_HANDLE image_handle) {
     UINTN buf_size;
     EFI_FILE_INFO *file_info;
     EFI_FILE_PROTOCOL *root;
-    unsigned char file_buf[MAX_FILE_BUF];
+    UINT16 file_buf[MAX_FILE_BUF / 2];
     int idx = 0;
     int file_num;
 
@@ -67,6 +67,29 @@ int ls(EFI_HANDLE image_handle) {
     return file_num;
 }
 
+void cat(EFI_HANDLE image_handle, UINT16 *file_name) {
+    EFI_STATUS status;
+    EFI_FILE_PROTOCOL *root, *file;
+    UINTN buf_size = MAX_FILE_BUF;
+    UINT16 file_buf[MAX_FILE_BUF / 2];
+
+    status = OpenRootDir(image_handle, &root);
+    assert(status, L"OpenRootDir");
+
+    status = root->Open(root, &file, file_name, EFI_FILE_MODE_READ, 0);
+    assert(status, L"root->Open");
+
+    status = file->Read(file, &buf_size, (VOID *)file_buf);
+    assert(status, L"file->Read");
+
+    puts(file_buf);
+    puts(L"\r");
+
+    file->Close(file);
+    root->Close(root);
+
+}
+
 void shell(EFI_HANDLE image_handle) {
     UINT16 cmd[MAX_COMMAND_LEN];
     struct RECT r = {10, 10, 100, 200};
@@ -86,6 +109,8 @@ void shell(EFI_HANDLE image_handle) {
             ST->ConOut->ClearScreen(ST->ConOut);
         else if(!strcmp(L"ls", cmd))
             ls(image_handle);
+        else if(!strcmp(L"cat", cmd))
+            cat(image_handle, L"abc");
         else 
             puts(L"Command not found.\r\n");
     }
