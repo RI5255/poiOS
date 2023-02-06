@@ -41,8 +41,9 @@ UINT16 getc(VOID) {
     ST->BootServices->WaitForEvent(1, &(ST->ConIn->WaitForKey), &waitidx); // キー入力を待つ
 
     while(ST->ConIn->ReadKeyStroke(ST->ConIn, &key));
-
-    return key.UnicodeChar;
+    
+    // 入力がUnicode範囲外の時はkey.UnicodeCharは0になる
+    return (key.UnicodeChar)? key.UnicodeChar : (key.ScanCode + SC_OFS);
 }
 
 UINT32 gets(UINT16 *buf, UINT32 buf_size) {

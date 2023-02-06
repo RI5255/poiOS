@@ -4,6 +4,8 @@
 #define NULL	(void *)0
 #define TRUE	1
 #define FALSE	0
+#define SC_OFS 0x1680
+#define SC_ESC (SC_OFS + 0x0017)
 
 #include "efi.h"
 

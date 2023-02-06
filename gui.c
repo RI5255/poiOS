@@ -64,12 +64,18 @@ int ls_gui(EFI_HANDLE image_handle) {
     return file_num;
 }
 
+void cat_gui(EFI_HANDLE  image_handle, UINT16 *file_name) {
+    ST->ConOut->ClearScreen(ST->ConOut);
+    cat(image_handle, file_name);
+    while(getc() != SC_ESC);
+}
 
 void gui(EFI_HANDLE image_handle) {
     int px = 0, py = 0, file_num;
     EFI_STATUS status;
     UINTN waitidx;
     EFI_SIMPLE_POINTER_STATE s;
+    BOOLEAN prev_lb = FALSE;
 
     ST->ConOut->ClearScreen(ST->ConOut);
     SPP->Reset(SPP, FALSE);
@@ -102,6 +108,10 @@ void gui(EFI_HANDLE image_handle) {
                         draw_rect(file_list[i].rect, yellow);
                         file_list[i].is_highlighted = TRUE;
                     }
+                    if(prev_lb && !s.LeftButton) {
+                        cat_gui(image_handle, file_list[i].name);
+                        file_num = ls_gui(image_handle);
+                    }
                 }else {
                     if(file_list[i].is_highlighted) {
                         draw_rect(file_list[i].rect, white);
@@ -109,6 +119,9 @@ void gui(EFI_HANDLE image_handle) {
                     }
                 }
             }
+
+            // マウスの左ボタンの前回の状態を更新
+            prev_lb = s.LeftButton;
         }
     }
 }
