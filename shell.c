@@ -90,6 +90,47 @@ void cat(EFI_HANDLE image_handle, UINT16 *file_name) {
 
 }
 
+void edit(EFI_HANDLE image_handle, CHAR16 *file_name) {
+    EFI_STATUS status;
+    EFI_FILE_PROTOCOL *root, *file;
+    UINTN buf_size = MAX_FILE_BUF;
+    UINT16 c, file_buf[MAX_FILE_BUF / 2];
+    int i = 0;
+
+    ST->ConOut->ClearScreen(ST->ConOut);
+
+    while(TRUE) {
+        c = getc();
+        
+        if(c == SC_ESC) break;
+
+        putc(c);
+        file_buf[i++] = c;
+
+        if(c == L'\r') {
+            putc(L'\n');
+            file_buf[i++] = L'\n';
+        }
+    }
+
+    file_buf[i] = L'\0';
+
+    status = OpenRootDir(image_handle, &root);
+    assert(status, L"OpenRootDir");
+
+    status = root->Open(root, &file, file_name, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+    assert(status, L"root->Open");
+
+    status = file->Write(file, &buf_size, (VOID *)file_buf);
+    assert(status, L"file->Write");
+
+    file->Flush(file);
+
+    file->Close(file);
+    root->Close(root);
+
+}
+
 void shell(EFI_HANDLE image_handle) {
     UINT16 cmd[MAX_COMMAND_LEN];
     struct RECT r = {10, 10, 100, 200};
@@ -111,6 +152,8 @@ void shell(EFI_HANDLE image_handle) {
             ls(image_handle);
         else if(!strcmp(L"cat", cmd))
             cat(image_handle, L"abc");
+        else if(!strcmp(L"edit", cmd))
+            edit(image_handle, L"abc");
         else 
             puts(L"Command not found.\r\n");
     }
