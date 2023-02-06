@@ -79,7 +79,7 @@ void shell(EFI_HANDLE image_handle) {
         else if(!strcmp(L"rect", cmd))
             draw_rect(r, white);
         else if(!strcmp(L"gui", cmd))
-            gui();
+            gui(image_handle);
         else if(!strcmp(L"pstat", cmd))
             pstat();
         else if(!strcmp(L"clear", cmd))

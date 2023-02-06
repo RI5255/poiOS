@@ -6,9 +6,13 @@
 #define MAX_FILE_BUF 1024
 
 #include "efi.h"
+#include "graphics.h"
 
 struct FILE {
+    struct RECT rect;
+    BOOLEAN is_highlighted;
     unsigned short name[MAX_FILE_NAME_LEN];
+
 };
 
 extern struct FILE file_list[MAX_FILE_NUM];

@@ -67,7 +67,7 @@ EFI_STATUS OpenSPP(EFI_HANDLE image_handle, EFI_SIMPLE_POINTER_PROTOCOL **spp) {
     
     // TODO: 数字が決め打ちなっている所を何とかしたい
     status = ST->BootServices->OpenProtocol(
-        spp_handles[2],
+        spp_handles[0],
         &SPP_GUID,
         (VOID**)spp,
         image_handle,
