@@ -152,7 +152,9 @@ void edit(EFI_HANDLE image_handle, CHAR16 *file_name) {
 void shell(EFI_HANDLE image_handle) {
     UINT16 cmd[MAX_COMMAND_LEN];
     struct RECT r = {10, 10, 100, 200};
-    while(TRUE) {
+    BOOLEAN is_exit = FALSE;
+
+    while(!is_exit) {
         puts(L"poiOS> ");
         if(gets(cmd, MAX_COMMAND_LEN) <= 0) // CRのみだった場合は何もしない
             continue;
@@ -172,6 +174,8 @@ void shell(EFI_HANDLE image_handle) {
             cat(image_handle, L"abc");
         else if(!strcmp(L"edit", cmd))
             edit(image_handle, L"abc");
+        else if(!strcmp(L"exit", cmd))
+            is_exit = TRUE;
         else 
             puts(L"Command not found.\r\n");
     }
