@@ -6,7 +6,11 @@
 #include "file.h"
 
 #define WIDTH_PER_CH	8
-#define HEIGHT 20
+#define FILE_ICON_HEIGHT 20
+#define EXIT_BUTTON_WIDTH 20
+#define EXIT_BUTTON_HEIGHT 20
+
+struct FILE rect_exit_button;
 
 EFI_GRAPHICS_OUTPUT_BLT_PIXEL tmp = {0, 0, 0, 0};
 unsigned int cursor_old_x;
@@ -37,6 +41,41 @@ void put_cursor(unsigned int x, unsigned int y) {
     cursor_old_y = y;
 }
 
+void put_exit_button(void) {
+    UINT32 hr = GOP->Mode->Info->HorizontalResolution;
+    rect_exit_button.rect.x = hr - EXIT_BUTTON_WIDTH;
+    rect_exit_button.rect.y = 0;
+    rect_exit_button.rect.w = EXIT_BUTTON_WIDTH;
+    rect_exit_button.rect.h = EXIT_BUTTON_HEIGHT;
+    rect_exit_button.is_highlighted = FALSE;
+    draw_rect(rect_exit_button.rect, white);
+
+    for(UINT32 x = 3; x < rect_exit_button.rect.w - 3; x++) {
+        draw_pixel(x + rect_exit_button.rect.x, x, white);
+        draw_pixel(x + rect_exit_button.rect.x, rect_exit_button.rect.w - x, white);
+    }
+}
+
+BOOLEAN update_exit_button(int px, int py, BOOLEAN is_clicked) {
+    BOOLEAN is_exit = FALSE;
+
+    if(is_in_rect(px, py, rect_exit_button.rect)) {
+        if(!rect_exit_button.is_highlighted) {
+            draw_rect(rect_exit_button.rect, yellow);
+            rect_exit_button.is_highlighted = TRUE;
+        }
+        if(is_clicked)
+            is_exit = TRUE;
+    }else {
+        if(rect_exit_button.is_highlighted) {
+            draw_rect(rect_exit_button.rect, white);
+            rect_exit_button.is_highlighted = FALSE;
+        }
+    }
+
+    return is_exit;
+}
+
 // TODO: 座標が決め打ちになっているところを何とかしたい
 int ls_gui(EFI_HANDLE image_handle) {
     int file_num;
@@ -48,7 +87,7 @@ int ls_gui(EFI_HANDLE image_handle) {
     r.x = 362;
     r.y = 148;
     r.w = (MAX_FILE_NAME_LEN - 1) * WIDTH_PER_CH;
-    r.h = HEIGHT;
+    r.h = FILE_ICON_HEIGHT;
 
     for(int i = 0; i < file_num; i++) {
         file_list[i].rect.x = r.x;
@@ -75,14 +114,15 @@ void gui(EFI_HANDLE image_handle) {
     EFI_STATUS status;
     UINTN waitidx;
     EFI_SIMPLE_POINTER_STATE s;
-    BOOLEAN prev_lb = FALSE, prev_rb = FALSE, executed_rb;
+    BOOLEAN prev_lb = FALSE, prev_rb = FALSE, executed_rb, is_exit = FALSE;
 
     ST->ConOut->ClearScreen(ST->ConOut);
     SPP->Reset(SPP, FALSE);
 
     file_num = ls_gui(image_handle);
+    put_exit_button();
 
-    while(TRUE) {
+    while(!is_exit) {
         ST->BootServices->WaitForEvent(1, &(SPP->WaitForInput), &waitidx);
         status = SPP->GetState(SPP, &s);
 
@@ -114,10 +154,12 @@ void gui(EFI_HANDLE image_handle) {
                     if(prev_lb && !s.LeftButton) {
                         cat_gui(image_handle, file_list[i].name);
                         file_num = ls_gui(image_handle);
+                        put_exit_button();
                     }
                     if(prev_rb && !s.RightButton) {
                         edit(image_handle, file_list[i].name);
                         file_num = ls_gui(image_handle);
+                        put_exit_button();
                         executed_rb = TRUE;
                     }
                 }else {
@@ -135,7 +177,11 @@ void gui(EFI_HANDLE image_handle) {
                 ST->ConOut->ClearScreen(ST->ConOut);
                 puts(file_list[file_num].name);
                 file_num = ls_gui(image_handle);
+                put_exit_button();
             }
+
+            // 終了ボタン更新
+            is_exit = update_exit_button(px, py, prev_lb && !s.LeftButton);
 
             // マウスの左右ボタンの前回の状態を更新
             prev_lb = s.LeftButton;

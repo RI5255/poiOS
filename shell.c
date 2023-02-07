@@ -162,8 +162,10 @@ void shell(EFI_HANDLE image_handle) {
             puts(L"Hello UEFI!\r\n");
         else if(!strcmp(L"rect", cmd))
             draw_rect(r, white);
-        else if(!strcmp(L"gui", cmd))
+        else if(!strcmp(L"gui", cmd)){
             gui(image_handle);
+            ST->ConOut->ClearScreen(ST->ConOut);
+        }
         else if(!strcmp(L"pstat", cmd))
             pstat();
         else if(!strcmp(L"clear", cmd))
