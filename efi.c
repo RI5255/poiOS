@@ -93,6 +93,38 @@ EFI_STATUS OpenSPP(EFI_HANDLE image_handle, EFI_SIMPLE_POINTER_PROTOCOL **spp) {
     return 0;
 }
 
+EFI_STATUS OpenSITEP(EFI_HANDLE *image_handle, EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL **stiep) {
+    EFI_STATUS status;
+    UINTN num_stiep_handles = 0;
+    EFI_HANDLE* stiep_handles = NULL;
+
+    status = ST->BootServices->LocateHandleBuffer(
+        ByProtocol,
+        &STIEP_GUID,
+        NULL,
+        &num_stiep_handles,
+        &stiep_handles);
+    
+    if(status)
+        return status;
+    
+    // TODO: 数字が決め打ちなっている所を何とかしたい
+    status = ST->BootServices->OpenProtocol(
+        stiep_handles[0],
+        &STIEP_GUID,
+        (VOID**)stiep,
+        image_handle,
+        NULL,
+        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+
+    if(status)
+        return status;
+
+    ST->BootServices->FreePool(stiep_handles);
+
+    return 0;
+}
+
 void put_attribute(UINTN attribute) {
     UINT16  *c[]    =  {L"EFI_BLACK", L"EFI_BLUE", L"EFI_GREEN", L"EFI_CYAN", 
                         L"EFI_RED", L"EFI_MAGENTA", L"EFI_BROWN", L"EFI_LIGHTGRAY",
@@ -125,16 +157,17 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     status = OpenSPP(image_handle, &SPP);
     assert(status, L"OpenSPP");
 
+    status = OpenSITEP(image_handle, &STIEP);
+    assert(status, L"OpenSTIEP");
+
     status = ST->BootServices->LocateProtocol(&DPTTP_GUID, NULL, (VOID**)&DPTTP);
     assert(status, L"Failed to locate DPTTP");
 
-    status = ST->BootServices->LocateProtocol(&STIEP_GUID, NULL, (VOID **)&STIEP);
-    assert(status, L"Failed to locate STIEP");
-
+    // 'q'を押した時に実行される関数を登録する
     status = STIEP->RegisterKeyNotify(STIEP, &key_data, key_notice, &notify_handle);
     assert(status, L"STIEP->RegisterKeyNotify");
     
-    // EFI_SIMPLE_TEXT_OUTPUT_PROTOCOLの情報を表示する。
+    // EFI_SIMPLE_TEXT_OUTPUT_PROTOCOLの情報を表示する
     ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGREEN | EFI_BACKGROUND_BLACK);
     puts(L"EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL Modes:\r\n");
     for(UINT32 mode = 0; mode < ST->ConOut->Mode->MaxMode; mode++) {
@@ -175,10 +208,11 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     status = STIEP->UnregisterKeyNotify(STIEP, notify_handle);
     assert(status, L"STIEP->UnregisterNotify");
 
-    // Modeを変えてみる。
+    // Modeを変えてみる
     puts(L"Switching Mode...\r\n");
     status = ST->ConOut->SetMode(ST->ConOut, 3);
     assert(status, L"ST->ConOut->SetMode");
 
+    STIEP->Reset(STIEP, FALSE);
     ST->ConOut->ClearScreen(ST->ConOut);
 }

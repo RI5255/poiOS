@@ -35,15 +35,15 @@ VOID puth(UINT64 val, UINT8 bytes) {
 }
 
 UINT16 getc(VOID) {
-    EFI_INPUT_KEY key;
+    EFI_KEY_DATA input;
     UINTN waitidx;
 
-    ST->BootServices->WaitForEvent(1, &(ST->ConIn->WaitForKey), &waitidx); // キー入力を待つ
+    ST->BootServices->WaitForEvent(1, &(STIEP->WaitForKeyEx), &waitidx); // キー入力を待つ
 
-    while(ST->ConIn->ReadKeyStroke(ST->ConIn, &key));
+    while(STIEP->ReadKeyStrokeEx(STIEP, &input));
     
     // 入力がUnicode範囲外の時はkey.UnicodeCharは0になる
-    return (key.UnicodeChar)? key.UnicodeChar : (key.ScanCode + SC_OFS);
+    return (input.Key.UnicodeChar)? input.Key.UnicodeChar : (input.Key.ScanCode + SC_OFS);
 }
 
 UINT32 gets(UINT16 *buf, UINT32 buf_size) {
