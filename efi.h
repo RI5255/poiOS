@@ -218,7 +218,14 @@ typedef struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL{
     EFI_UNREGISTER_KEYSTROKE_NOTIFY UnregisterKeyNotify;
 } EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL;
 
-// EIF_BOOT_SERVICES
+// EFI_DEVICE_PATH_PROTOCOL
+typedef struct {
+    UINT8 Type;
+    UINT8 SubType;
+    UINT8 Length[2];
+} EFI_DEVICE_PATH_PROTOCOL;
+
+// EFI_BOOT_SERVICES
 typedef 
 EFI_STATUS
 (EFIAPI *EFI_FREE_POOL) (
@@ -246,6 +253,23 @@ EFI_STATUS
     IN EFI_GUID *Protocol,
     IN VOID *Registration OPTIONAL,
     OUT VOID **Interface
+);
+
+/* 
+@param BootPolicy ブートマネージャから呼ばれたことを表す。SourceBufferがNULLなら無視される。
+@param ParentImageHandle この関数を呼んだimageのhadnle
+@param DevicePath ロードするimageのDevicePath
+@param SourceBuffer NULLでなければロードされるイメージのコピーがあるメモリアドレス
+*/
+typedef  
+EFI_STATUS
+(EFIAPI *EFI_IMAGE_LOAD) (
+    IN BOOLEAN BootPolicy,
+    IN EFI_HANDLE ParentImageHandle,
+    IN EFI_DEVICE_PATH_PROTOCOL *DevicePath,
+    IN VOID *SourceBuffer OPTIONAL,
+    IN UINTN SourceSize,
+    OUT EFI_HANDLE *ImageHandle
 );
 
 typedef 
@@ -307,20 +331,26 @@ typedef struct {
     EFI_WAIT_FOR_EVENT WaitForEvent;
     char _pad4[24];
 
-    char _pad5[112];
+    // Protocol Handler Services
+    char _pad5[72];
+
+    // Image Services
+    EFI_IMAGE_LOAD LoadImage;
+    char _pad7[32];
 
     // Miscellaeous Services 
-    char _pad6[16];
+    char _pad8[16];
     EFI_SET_WATCHDOG_TIMER SetWatchdogTimer;
 
-    char _pad7[16];
+    // DriverSupport Services
+    char _pad9[16];
 
     // Open and Close Protocol Services
     EFI_OPEN_PROTOCOL OpenProtocol;
-    char _pad8[16];
+    char _pad10[16];
 
     // Library Services
-    char _pad9[8];
+    char _pad11[8];
     EFI_LOCATE_HANDLE_BUFFER LocateHandleBuffer;
     EFI_LOCATE_PROTOCOL LocateProtocol;
 
@@ -520,13 +550,6 @@ typedef struct {
     UINT64 Attribute;
     CHAR16 FileName[];
 } EFI_FILE_INFO;
-
-// EFI_DEVICE_PATH_PROTOCOL
-typedef struct {
-    UINT8 Type;
-    UINT8 SubType;
-    UINT8 Length[2];
-} EFI_DEVICE_PATH_PROTOCOL;
 
 // EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL 
 typedef 
