@@ -171,7 +171,7 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     status = ST->BootServices->LocateProtocol(&DPFTP_GUID, NULL, (VOID **)&DPFTP);
     assert(status, L"Failed to locate DPFTP");
 
-    // loaded imageのfilepathを表示してみる
+    // loaded imageのDevicePathを表示してみる
     status = ST->BootServices->OpenProtocol(
             image_handle, 
             &LIP_GUID,
@@ -181,14 +181,17 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
             EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
     assert(status, L"Failed to Open DPTTP");
 
-    // device pathを作ってみる
-    dev_path = DPFTP->ConvertTextToDevicePath(L"\\test.efi");
+    status = ST->BootServices->OpenProtocol(
+        lip->DeviceHandle,
+        &DPP_GUID,
+        (VOID **)&dev_path,
+        image_handle,
+        NULL,
+        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+    assert(status, L"Failed to Open DPP");
+    
     puts(L"dev_path: ");
     puts(DPTTP->ConvertDevicePathToText(dev_path, FALSE, FALSE));
-    puts(L"\r\n");
-    
-    puts(L"lip->FilePath: ");
-    puts(DPTTP->ConvertDevicePathToText(lip->FilePath, FALSE, FALSE));
     puts(L"\r\n");
 
     // 'q'を押した時に実行される関数を登録する
