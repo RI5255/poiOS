@@ -6,6 +6,7 @@ EFI_GRAPHICS_OUTPUT_PROTOCOL *GOP;
 EFI_SIMPLE_POINTER_PROTOCOL *SPP;
 EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DPTTP;
 EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *STIEP;
+EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL *DPFTP;
 
 static BOOLEAN is_exit = FALSE;
 
@@ -22,7 +23,9 @@ EFI_GUID    GOP_GUID    =   {0x9042a9de, 0x23dc, 0x4a38, \
             DPTTP_GUID  =   {0x8b843e20, 0x8132, 0x4852, \
                             {0x90, 0xcc, 0x55, 0x1a, 0x4e, 0x4a, 0x7f, 0x1c}},
             STIEP_GUID  =   {0xdd9e7534, 0x7762, 0x4698, \
-                            {0x8c, 0x14, 0xf5, 0x85, 0x17, 0xa6, 0x25, 0xaa}};
+                            {0x8c, 0x14, 0xf5, 0x85, 0x17, 0xa6, 0x25, 0xaa}},
+            DPFTP_GUID  =   {0x5c99a21, 0xc70f, 0x4ad2, \
+                            {0x8a, 0x5f, 0x35, 0xdf, 0x33, 0x43, 0xf5, 0x1e}};
 
 // 'q'が押された時に実行される関数
 EFI_STATUS key_notice(EFI_KEY_DATA *key_data __attribute__((unused))) {
@@ -146,6 +149,7 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     EFI_KEY_DATA key_data= {{0, L'q'}, {0, 0}};
     VOID *notify_handle;
     EFI_LOADED_IMAGE_PROTOCOL *lip;
+    EFI_DEVICE_PATH_PROTOCOL *dev_path;
 
     ST = system_table;
     ST->ConOut->ClearScreen(ST->ConOut);
@@ -164,6 +168,9 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     status = ST->BootServices->LocateProtocol(&DPTTP_GUID, NULL, (VOID**)&DPTTP);
     assert(status, L"Failed to locate DPTTP");
 
+    status = ST->BootServices->LocateProtocol(&DPFTP_GUID, NULL, (VOID **)&DPFTP);
+    assert(status, L"Failed to locate DPFTP");
+
     // loaded imageのfilepathを表示してみる
     status = ST->BootServices->OpenProtocol(
             image_handle, 
@@ -174,6 +181,12 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
             EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
     assert(status, L"Failed to Open DPTTP");
 
+    // device pathを作ってみる
+    dev_path = DPFTP->ConvertTextToDevicePath(L"\\test.efi");
+    puts(L"dev_path: ");
+    puts(DPTTP->ConvertDevicePathToText(dev_path, FALSE, FALSE));
+    puts(L"\r\n");
+    
     puts(L"lip->FilePath: ");
     puts(DPTTP->ConvertDevicePathToText(lip->FilePath, FALSE, FALSE));
     puts(L"\r\n");
