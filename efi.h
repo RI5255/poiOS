@@ -146,6 +146,78 @@ typedef struct _EFI_SIMPLE_TEXT_INPUT_PROTOCOL {
     EFI_EVENT WaitForKey;
 } EFI_SIMPLE_TEXT_INPUT_PROTOCOL;
 
+// EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL
+struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL;
+
+typedef UINT8 EFI_KEY_TOGGLE_STATE;
+
+typedef struct {
+    UINT32 KeyShiftState; // Shiftキーの押下状態
+    EFI_KEY_TOGGLE_STATE KeyToggleState; // ScrollLock, NumLock, CapsLockの状態
+} EFI_KEY_STATE;
+
+typedef struct {
+    EFI_INPUT_KEY Key;
+    EFI_KEY_STATE KeyState;
+} EFI_KEY_DATA;
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_INPUT_RESET_EX) (
+    IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
+    IN BOOLEAN ExtendedVerification
+);
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_INPUT_READ_KEY_EX) (
+    IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
+    OUT EFI_KEY_DATA *KeyData
+);
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_SET_STATE) (
+    IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
+    IN EFI_KEY_TOGGLE_STATE *KeyToggleState
+);
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_KEY_NOTIFY_FUNCTION) (
+    IN EFI_KEY_DATA *KeyData
+);
+
+/*
+@param KeyData どのキーを押したら関数を呼び出すかを指定する
+@prarm KeyNotificationFunction 関数へのポインタ
+@param NotifyHandle uniqueなhandleが変える。登録解除用に使用する。
+*/
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_REGISTER_KEYSTROKE_NOTIFY) (
+    IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
+    IN EFI_KEY_DATA *KeyData,
+    IN EFI_KEY_NOTIFY_FUNCTION KeyNotificationFunction,
+    OUT VOID **NotifyHandle
+);
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_UNREGISTER_KEYSTROKE_NOTIFY) (
+    IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
+    IN VOID *NotificationHandle
+);
+
+typedef struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL{
+    EFI_INPUT_RESET_EX Reset;
+    EFI_INPUT_READ_KEY_EX ReadKeyStrokeEx;
+    EFI_EVENT WaitForKeyEx;
+    EFI_SET_STATE SetState;
+    EFI_REGISTER_KEYSTROKE_NOTIFY RegisterKeyNotify;
+    EFI_UNREGISTER_KEYSTROKE_NOTIFY UnregisterKeyNotify;
+} EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL;
+
 // EIF_BOOT_SERVICES
 typedef 
 EFI_STATUS
@@ -520,7 +592,8 @@ extern EFI_SYSTEM_TABLE *ST;
 extern EFI_GRAPHICS_OUTPUT_PROTOCOL *GOP;
 extern EFI_SIMPLE_POINTER_PROTOCOL *SPP;
 extern EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DPTTP;
-extern EFI_GUID GOP_GUID, SPP_GUID, SFSP_GUID, LIP_GUID, DPP_GUID, DPTTP_GUID;
+extern EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *STIEP;
+extern EFI_GUID GOP_GUID, SPP_GUID, SFSP_GUID, LIP_GUID, DPP_GUID, DPTTP_GUID, STIEP_GUID;
 
 void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table);
 

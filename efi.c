@@ -5,6 +5,9 @@ EFI_SYSTEM_TABLE *ST;
 EFI_GRAPHICS_OUTPUT_PROTOCOL *GOP;
 EFI_SIMPLE_POINTER_PROTOCOL *SPP;
 EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DPTTP;
+EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *STIEP;
+
+static BOOLEAN is_exit = FALSE;
 
 EFI_GUID    GOP_GUID    =   {0x9042a9de, 0x23dc, 0x4a38, \
                             {0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a}},
@@ -17,7 +20,15 @@ EFI_GUID    GOP_GUID    =   {0x9042a9de, 0x23dc, 0x4a38, \
             DPP_GUID    =   {0x09576e91, 0x6d3f, 0x11d2, \
                             {0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b}},  
             DPTTP_GUID  =   {0x8b843e20, 0x8132, 0x4852, \
-                            {0x90, 0xcc, 0x55, 0x1a, 0x4e, 0x4a, 0x7f, 0x1c}};
+                            {0x90, 0xcc, 0x55, 0x1a, 0x4e, 0x4a, 0x7f, 0x1c}},
+            STIEP_GUID  =   {0xdd9e7534, 0x7762, 0x4698, \
+                            {0x8c, 0x14, 0xf5, 0x85, 0x17, 0xa6, 0x25, 0xaa}};
+
+// 'q'が押された時に実行される関数
+EFI_STATUS key_notice(EFI_KEY_DATA *key_data __attribute__((unused))) {
+    is_exit = TRUE;
+    return EFI_SUCCESS;
+}
 
 EFI_STATUS OpenGOP(EFI_HANDLE image_handle, EFI_GRAPHICS_OUTPUT_PROTOCOL **gop) {
     EFI_STATUS status;
@@ -100,11 +111,14 @@ void put_attribute(UINTN attribute) {
 void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     EFI_STATUS status;
     UINTN colums, rows;
+    EFI_KEY_DATA key_data= {{0, L'q'}, {0, 0}};
+    VOID *notify_handle;
 
     ST = system_table;
     ST->ConOut->ClearScreen(ST->ConOut);
     ST->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
 
+    // Locate Protocols
     status = OpenGOP(image_handle, &GOP);
     assert(status, L"OpenGOP");
 
@@ -114,6 +128,12 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     status = ST->BootServices->LocateProtocol(&DPTTP_GUID, NULL, (VOID**)&DPTTP);
     assert(status, L"Failed to locate DPTTP");
 
+    status = ST->BootServices->LocateProtocol(&STIEP_GUID, NULL, (VOID **)&STIEP);
+    assert(status, L"Failed to locate STIEP");
+
+    status = STIEP->RegisterKeyNotify(STIEP, &key_data, key_notice, &notify_handle);
+    assert(status, L"STIEP->RegisterKeyNotify");
+    
     // EFI_SIMPLE_TEXT_OUTPUT_PROTOCOLの情報を表示する。
     ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGREEN | EFI_BACKGROUND_BLACK);
     puts(L"EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL Modes:\r\n");
@@ -145,12 +165,20 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     puts(L"Current Attribute: ");
     put_attribute(ST->ConOut->Mode->Attribute);
     
-    while(getc() != SC_ESC);
+    ST->ConOut->SetAttribute(ST->ConOut, EFI_WHITE | EFI_BACKGROUND_BLACK);
+
+    puts(L"push 'q' to exit\r\n");
+    
+    while(!is_exit);
+
+    // 'q'を押した際に実行される関数の登録解除
+    status = STIEP->UnregisterKeyNotify(STIEP, notify_handle);
+    assert(status, L"STIEP->UnregisterNotify");
 
     // Modeを変えてみる。
     puts(L"Switching Mode...\r\n");
     status = ST->ConOut->SetMode(ST->ConOut, 3);
     assert(status, L"ST->ConOut->SetMode");
-    
+
     ST->ConOut->ClearScreen(ST->ConOut);
 }
