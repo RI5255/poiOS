@@ -7,11 +7,11 @@ VOID putc(UINT16 c) {
     UINT16 str[2];
     str[0] = c;
     str[1] = L'\0';
-    ST->ConOut->OutputtString(ST->ConOut, str);
+    ST->ConOut->OutputString(ST->ConOut, str);
 }
 
 VOID puts(UINT16 *s) {
-    ST->ConOut->OutputtString(ST->ConOut, s);
+    ST->ConOut->OutputString(ST->ConOut, s);
 }
 
 // put hex

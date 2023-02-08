@@ -11,7 +11,7 @@
 
 VOID putc(UINT16 c);
 VOID puts(UINT16 *s);
-VOID puth(UINT64 val, UINT8 num_digits);
+VOID puth(UINT64 val, UINT8 bytes);
 UINT16 getc(void);
 UINT32 gets(UINT16 *buf, UINT32 buf_size);
 INT32 strcmp(const UINT16 *s1, const UINT16 *s2);

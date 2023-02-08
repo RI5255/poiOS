@@ -82,8 +82,24 @@ EFI_STATUS OpenSPP(EFI_HANDLE image_handle, EFI_SIMPLE_POINTER_PROTOCOL **spp) {
     return 0;
 }
 
+void put_attribute(UINTN attribute) {
+    UINT16  *c[]    =  {L"EFI_BLACK", L"EFI_BLUE", L"EFI_GREEN", L"EFI_CYAN", 
+                        L"EFI_RED", L"EFI_MAGENTA", L"EFI_BROWN", L"EFI_LIGHTGRAY",
+                        L"EFI_BRIGHT(DARKGRAY)", L"EFI_LIGHTBLUE", L"EFI_LIGHTGREEN", 
+                        L"EFI_LIGHTCYAN", L"EFI_LIGHTRED", L"EFI_LIGHTMAGENTA", L"EFI_YELLOW", L"EFI_WHITE"},
+            *bc[]   =  {L"EFI_BACKGROUND_BLACK", L"EFI_BACKGROUND_BLUE",
+                        L"EFI_BACKGROUND_GREEN", L"EFI_BACKGROUND_CYAN",
+                        L"EFI_BACKGROUND_RED", L"EFI_BACKGROUND_MAGENTA",
+                        L"EFI_BACKGROUND_BROWN", L"EFI_BACKGROUND_LIGHTGRAY"};
+    puts(c[attribute & 0x0f]);
+    puts(L" ");
+    puts(bc[(attribute & 0xf0) >> 4]);
+    puts(L"\r\n");
+}
+
 void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     EFI_STATUS status;
+    UINTN colums, rows;
 
     ST = system_table;
     ST->ConOut->ClearScreen(ST->ConOut);
@@ -98,4 +114,43 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     status = ST->BootServices->LocateProtocol(&DPTTP_GUID, NULL, (VOID**)&DPTTP);
     assert(status, L"Failed to locate DPTTP");
 
+    // EFI_SIMPLE_TEXT_OUTPUT_PROTOCOLの情報を表示する。
+    ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGREEN | EFI_BACKGROUND_BLACK);
+    puts(L"EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL Modes:\r\n");
+    for(UINT32 mode = 0; mode < ST->ConOut->Mode->MaxMode; mode++) {
+        status = ST->ConOut->QueryMode(ST->ConOut, mode, &colums, &rows);
+        switch(status) {
+            case EFI_SUCCESS:
+                puth(mode, sizeof(mode));
+                puts(L": ");
+                puth(colums, sizeof(colums));
+                puts(L" x ");
+                puth(rows, sizeof(rows));
+                puts(L"\r\n");
+                break;
+            
+            case EFI_UNSPPORTED:
+                puth(mode, sizeof(mode));
+                puts(L": unsupported\r\n");
+                break;
+            
+            default:
+                assert(status, L"QueryMode");
+                break;
+        }
+    }
+    puts(L"Current Mode: ");
+    puth(ST->ConOut->Mode->Mode, sizeof(ST->ConOut->Mode->Mode));
+    puts(L"\r\n");
+    puts(L"Current Attribute: ");
+    put_attribute(ST->ConOut->Mode->Attribute);
+    
+    while(getc() != SC_ESC);
+
+    // Modeを変えてみる。
+    puts(L"Switching Mode...\r\n");
+    status = ST->ConOut->SetMode(ST->ConOut, 3);
+    assert(status, L"ST->ConOut->SetMode");
+    
+    ST->ConOut->ClearScreen(ST->ConOut);
 }
