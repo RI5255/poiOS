@@ -84,8 +84,8 @@ int ls_gui(EFI_HANDLE image_handle) {
     ST->ConOut->ClearScreen(ST->ConOut);
     file_num = ls(image_handle);
 
-    r.x = 362;
-    r.y = 148;
+    r.x = 0;
+    r.y = 0;
     r.w = (MAX_FILE_NAME_LEN - 1) * WIDTH_PER_CH;
     r.h = FILE_ICON_HEIGHT;
 
