@@ -7,6 +7,7 @@ EFI_SIMPLE_POINTER_PROTOCOL *SPP;
 EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *DPTTP;
 EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *STIEP;
 EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL *DPFTP;
+EFI_DEVICE_PATH_UTLITIES_PROTOCOL *DPUP;
 
 static BOOLEAN is_exit = FALSE;
 
@@ -25,7 +26,9 @@ EFI_GUID    GOP_GUID    =   {0x9042a9de, 0x23dc, 0x4a38, \
             STIEP_GUID  =   {0xdd9e7534, 0x7762, 0x4698, \
                             {0x8c, 0x14, 0xf5, 0x85, 0x17, 0xa6, 0x25, 0xaa}},
             DPFTP_GUID  =   {0x5c99a21, 0xc70f, 0x4ad2, \
-                            {0x8a, 0x5f, 0x35, 0xdf, 0x33, 0x43, 0xf5, 0x1e}};
+                            {0x8a, 0x5f, 0x35, 0xdf, 0x33, 0x43, 0xf5, 0x1e}},
+            DPUP_GUID   =   {0x379be4e, 0xd706, 0x437d, \
+                            {0xb0, 0x37, 0xed, 0xb8, 0x2f, 0xb7, 0x72, 0xa4}};
 
 // 'q'が押された時に実行される関数
 EFI_STATUS key_notice(EFI_KEY_DATA *key_data __attribute__((unused))) {
@@ -149,7 +152,7 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     EFI_KEY_DATA key_data= {{0, L'q'}, {0, 0}};
     VOID *notify_handle;
     EFI_LOADED_IMAGE_PROTOCOL *lip;
-    EFI_DEVICE_PATH_PROTOCOL *dev_path;
+    EFI_DEVICE_PATH_PROTOCOL *dev_path, *dev_node, *dev_path_merged;
 
     ST = system_table;
     ST->ConOut->ClearScreen(ST->ConOut);
@@ -171,7 +174,10 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     status = ST->BootServices->LocateProtocol(&DPFTP_GUID, NULL, (VOID **)&DPFTP);
     assert(status, L"Failed to locate DPFTP");
 
-    // loaded imageのDevicePathを表示してみる
+    status = ST->BootServices->LocateProtocol(&DPUP_GUID, NULL, (VOID **)&DPUP);
+    assert(status, L"Failed to locate DPUP");
+
+    // test.efiのFullPathを作ってみる
     status = ST->BootServices->OpenProtocol(
             image_handle, 
             &LIP_GUID,
@@ -179,7 +185,7 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
             image_handle,
             NULL,
             EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
-    assert(status, L"Failed to Open DPTTP");
+    assert(status, L"Failed to Open LIP");
 
     status = ST->BootServices->OpenProtocol(
         lip->DeviceHandle,
@@ -190,8 +196,11 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
         EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
     assert(status, L"Failed to Open DPP");
     
-    puts(L"dev_path: ");
-    puts(DPTTP->ConvertDevicePathToText(dev_path, FALSE, FALSE));
+    dev_node = DPFTP->ConvertTextToDeviceNode(L"test.efi");
+    dev_path_merged = DPUP->AppendDeviceNode(dev_path, dev_node);
+
+    puts(L"dev_path_merged: ");
+    puts(DPTTP->ConvertDevicePathToText(dev_path_merged, FALSE, FALSE));
     puts(L"\r\n");
 
     // 'q'を押した時に実行される関数を登録する
