@@ -317,6 +317,19 @@ EFI_STATUS
     OUT EFI_HANDLE *ImageHandle
 );
 
+/*
+@param ImageHandle 実行するimageのhandle
+@param ExitDataSize ExitDataのサイズへのポインタ。ExitDataがNULLの場合はULLを指定する
+@param ExitData BootServices->Exit()で終了した場合に呼び出し元へ返されるデータへのポインタ
+*/
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_IMAGE_START) (
+    IN EFI_HANDLE ImageHandle,
+    OUT UINTN *ExitDataSize,
+    OUT CHAR16 **ExitData OPTIONAL
+);
+
 typedef 
 EFI_STATUS
 (EFIAPI *EFI_SET_WATCHDOG_TIMER) (
@@ -381,7 +394,8 @@ typedef struct {
 
     // Image Services
     EFI_IMAGE_LOAD LoadImage;
-    char _pad7[32];
+    EFI_IMAGE_START StartImage;
+    char _pad7[24];
 
     // Miscellaeous Services 
     char _pad8[16];
