@@ -151,8 +151,6 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     UINTN colums, rows;
     EFI_KEY_DATA key_data= {{0, L'q'}, {0, 0}};
     VOID *notify_handle;
-    EFI_LOADED_IMAGE_PROTOCOL *lip;
-    EFI_DEVICE_PATH_PROTOCOL *dev_path, *dev_node, *dev_path_merged;
 
     ST = system_table;
     ST->ConOut->ClearScreen(ST->ConOut);
@@ -176,32 +174,6 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
 
     status = ST->BootServices->LocateProtocol(&DPUP_GUID, NULL, (VOID **)&DPUP);
     assert(status, L"Failed to locate DPUP");
-
-    // test.efiのFullPathを作ってみる
-    status = ST->BootServices->OpenProtocol(
-            image_handle, 
-            &LIP_GUID,
-            (VOID **)&lip,
-            image_handle,
-            NULL,
-            EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
-    assert(status, L"Failed to Open LIP");
-
-    status = ST->BootServices->OpenProtocol(
-        lip->DeviceHandle,
-        &DPP_GUID,
-        (VOID **)&dev_path,
-        image_handle,
-        NULL,
-        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
-    assert(status, L"Failed to Open DPP");
-    
-    dev_node = DPFTP->ConvertTextToDeviceNode(L"test.efi");
-    dev_path_merged = DPUP->AppendDeviceNode(dev_path, dev_node);
-
-    puts(L"dev_path_merged: ");
-    puts(DPTTP->ConvertDevicePathToText(dev_path_merged, FALSE, FALSE));
-    puts(L"\r\n");
 
     // 'q'を押した時に実行される関数を登録する
     status = STIEP->RegisterKeyNotify(STIEP, &key_data, key_notice, &notify_handle);
