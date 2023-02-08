@@ -273,7 +273,8 @@ EFI_STATUS
     OUT EFI_HANDLE **Buffer
 );
 
-#define EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL 0x00000001
+#define EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL    0x00000001
+#define EFI_OPEN_PROTOCOL_GET_PROTOCOL           0x00000002
 
 /* 
 @param Handle オープンするプロトコルで扱う対象のハンドルを指定
@@ -520,6 +521,26 @@ typedef struct {
     CHAR16 FileName[];
 } EFI_FILE_INFO;
 
+// EFI_DEVICE_PATH_PROTOCOL
+typedef struct {
+    UINT8 Type;
+    UINT8 SubType;
+    UINT8 Length[2];
+} EFI_DEVICE_PATH_PROTOCOL;
+
+typedef 
+CHAR16 *
+(EFIAPI *EFI_DEVICE_PATH_TO_TEXT_PATH) (
+    IN CONST EFI_DEVICE_PATH_PROTOCOL *DevicePath,
+    IN BOOLEAN DisplayOnly,
+    IN BOOLEAN AllowShortcuts
+);
+
+typedef struct {
+    char _pad[8];
+    EFI_DEVICE_PATH_TO_TEXT_PATH ConvertDevicePathToText;
+} EFI_DEVICE_PATH_TO_TEXT_PROTOCOL;
+
 // EFI_LOADED_IMAGE_PROTOCOL 
 typedef enum {
     EfiReservedMemoryType,
@@ -554,6 +575,7 @@ typedef struct {
     
     // Source location of the image
     EFI_HANDLE DeviceHandle;
+    EFI_DEVICE_PATH_PROTOCOL *FilePath;
     VOID *Reserved;
 
     // Image`s load options
@@ -567,26 +589,6 @@ typedef struct {
     EFI_MEMORY_TYPE ImageDataType;
     EFI_IMAGE_UNLOAD Unload;
 } EFI_LOADED_IMAGE_PROTOCOL;
-
-// EFI_DEVICE_PATH_PROTOCOL
-typedef struct {
-    UINT8 Type;
-    UINT8 SubType;
-    UINT8 Length[2];
-} EFI_DEVICE_PATH_PROTOCOL;
-
-typedef 
-CHAR16 *
-(EFIAPI *EFI_DEVICE_PATH_TO_TEXT_PATH) (
-    IN CONST EFI_DEVICE_PATH_PROTOCOL *DevicePath,
-    IN BOOLEAN DisplayOnly,
-    IN BOOLEAN AllowShortcuts
-);
-
-typedef struct {
-    char _pad[8];
-    EFI_DEVICE_PATH_TO_TEXT_PATH ConvertDevicePathToText;
-} EFI_DEVICE_PATH_TO_TEXT_PROTOCOL;
 
 extern EFI_SYSTEM_TABLE *ST;
 extern EFI_GRAPHICS_OUTPUT_PROTOCOL *GOP;

@@ -145,6 +145,7 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     UINTN colums, rows;
     EFI_KEY_DATA key_data= {{0, L'q'}, {0, 0}};
     VOID *notify_handle;
+    EFI_LOADED_IMAGE_PROTOCOL *lip;
 
     ST = system_table;
     ST->ConOut->ClearScreen(ST->ConOut);
@@ -162,6 +163,20 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
 
     status = ST->BootServices->LocateProtocol(&DPTTP_GUID, NULL, (VOID**)&DPTTP);
     assert(status, L"Failed to locate DPTTP");
+
+    // loaded imageのfilepathを表示してみる
+    status = ST->BootServices->OpenProtocol(
+            image_handle, 
+            &LIP_GUID,
+            (VOID **)&lip,
+            image_handle,
+            NULL,
+            EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+    assert(status, L"Failed to Open DPTTP");
+
+    puts(L"lip->FilePath: ");
+    puts(DPTTP->ConvertDevicePathToText(lip->FilePath, FALSE, FALSE));
+    puts(L"\r\n");
 
     // 'q'を押した時に実行される関数を登録する
     status = STIEP->RegisterKeyNotify(STIEP, &key_data, key_notice, &notify_handle);
@@ -198,7 +213,7 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     puts(L"Current Attribute: ");
     put_attribute(ST->ConOut->Mode->Attribute);
     
-    ST->ConOut->SetAttribute(ST->ConOut, EFI_WHITE | EFI_BACKGROUND_BLACK);
+    ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
 
     puts(L"push 'q' to exit\r\n");
     
