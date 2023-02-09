@@ -178,6 +178,8 @@ void shell(EFI_HANDLE image_handle) {
             edit(image_handle, L"abc");
         else if(!strcmp(L"exit", cmd))
             is_exit = TRUE;
+        else if(!strcmp(L"shutdown", cmd))
+            ST->RuntimeServices->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
         else 
             puts(L"Command not found.\r\n");
     }

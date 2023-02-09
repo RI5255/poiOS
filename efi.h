@@ -15,6 +15,7 @@ typedef unsigned char  BOOLEAN;
 typedef UINTN EFI_STATUS;
 typedef VOID* EFI_HANDLE;
 typedef VOID* EFI_EVENT;
+typedef UINTN EFI_TPL;
 #define EFIAPI 
 #define IN 
 #define OUT 
@@ -271,10 +272,84 @@ typedef struct {
 } EFI_DEVICE_PATH_UTLITIES_PROTOCOL;
 
 // EFI_BOOT_SERVICES
+typedef enum {
+    EfiReservedMemoryType,
+    EfiLoaderCode,
+    EfiLoaderData,
+    EfiBootServicesCode,
+    EfiBootServicesData,
+    EfiRuntimeServicesCode,
+    EfiRuntimeServicesData,
+    EfiConventionalMemory,
+    EfiUnusableMemory,
+    EfiACPIReclaimMemory,
+    EfiACPIMemoryNVS,
+    EfiMemoryMappedIO,
+    EfiMemoryMappedIOPortSpace,
+    EfiPalCode,
+    EfiPersistentMemory,
+    EfiUnacceptedMemoryType,
+    EfiMaxMemoryType
+} EFI_MEMORY_TYPE;
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_ALLOCATE_POOL) (
+    IN EFI_MEMORY_TYPE PoolType,
+    IN UINTN Size,
+    OUT VOID **Buffer
+);
+
 typedef 
 EFI_STATUS
 (EFIAPI *EFI_FREE_POOL) (
     IN VOID *Buffer
+);
+
+// Event Types
+#define EVT_TIMER                           0x80000000
+#define EVT_RUNTIME                         0x40000000
+#define EVT_NOTIFY_WAIT                     0x00000100
+#define EVT_NOTIFY_SIGNAL                   0x00000200
+#define EVT_SIGNAL_EXIT_BOOT_SERVICES       0x00000201
+#define EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE   0x60000202
+
+typedef 
+VOID 
+(EFIAPI *EFI_EVENT_NOTIFY) (
+    IN EFI_EVENT Event,
+    IN VOID *Context
+);
+
+/*
+@param Type             上記のイベントタイプのどれかを指定
+@param NotifyTpl        イベント通知関数のタスク優先度レベル
+@param NotifyFunction   イベント発生時に実行する関数
+@param NotifyContext    通知関数へ渡す引数を設定
+@param Event            生成されたイベントを格納するポインタ
+*/
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_CREATE_EVENT) (
+    IN UINT32 Type,
+    IN EFI_TPL NotifyTpl,
+    IN EFI_EVENT_NOTIFY NOtifyFunction, OPTIONAL
+    IN VOID *NotifyContext, OPTIONAL
+    OUT EFI_EVENT *Event
+);
+
+typedef enum {
+    TimerCancel,    //設定されているトリガー時間をキャンセル
+    TimerPeriodic,  //現時刻からの周期的なトリガー時間を設定
+    TimerRelative   //現時刻からの1回のみのトリガー時間を設定
+} EFI_TIMER_DELAY;
+
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_SET_TIMER) (
+    IN EFI_EVENT Event,
+    IN EFI_TIMER_DELAY Type,
+    IN UINT64 TriggerTime
 );
 
 typedef 
@@ -381,11 +456,13 @@ typedef struct {
     char _pad1[40];
 
     // Memory Services
-    char _pad2[32];
+    char _pad2[24];
+    EFI_ALLOCATE_POOL AllocatePool;
     EFI_FREE_POOL FreePool;
 
     // Event & Timer Services
-    char _pad3[16];
+    EFI_CREATE_EVENT CreateEvent;
+    EFI_SET_TIMER SetTimer;
     EFI_WAIT_FOR_EVENT WaitForEvent;
     char _pad4[24];
 
@@ -415,13 +492,48 @@ typedef struct {
 
 } EFI_BOOT_SERVICES;
 
+// EFI_RUNTIME_SERVICES
+
+// EFI_RESET_TYPE
+typedef enum {
+    EFiResetCold,               // 再起動
+    EfiResetWarm,               // CPUのみをリセットする。これがサポートされていないときはColdを実行する必要がある
+    EfiResetShutdown,           // シャットダウン
+    EfiResetPlatformSpecific    // ?
+} EFI_RESET_TYPE;
+
+/*
+@param ResetType    上記のResetTypeの内どれかを指定
+@param ResetStatus  リセットのステータスコードを指定。システムのリセットが正常な動作ならEFI_SUCCESSを指定
+@param DataSize     ResetDataのデータサイズをバイト単位で指定
+@param ResetData    ResetStatusがEFI_SUCCESSでないなら、NULL終端文字列を指定することで呼び出し元へ伝達できるらしい。
+*/
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_RESET_SYSTEM) (
+    IN EFI_RESET_TYPE   ResetType,
+    IN EFI_STATUS       ResetStatus,
+    IN UINTN            DataSize,
+    IN VOID             *ResetData OPTIONAL
+);
+
+typedef struct {
+    char _pad1[96];
+    
+    // Miscellaneous Services
+    char _pad2[8];
+    EFI_RESET_SYSTEM ResetSystem;
+
+} EFI_RUNTIME_SERVICES;
+
 // EFI_SYSTEM_TABLE
 typedef struct{
     char _pad1[44];
     EFI_SIMPLE_TEXT_INPUT_PROTOCOL *ConIn;
     char _pad2[8];
     EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *ConOut;
-    char _pad3[24];
+    char _pad3[16];
+    EFI_RUNTIME_SERVICES *RuntimeServices;
     EFI_BOOT_SERVICES *BootServices;
 } EFI_SYSTEM_TABLE;
 
@@ -611,26 +723,6 @@ typedef struct {
 } EFI_FILE_INFO;
 
 // EFI_LOADED_IMAGE_PROTOCOL 
-typedef enum {
-    EfiReservedMemoryType,
-    EfiLoaderCode,
-    EfiLoaderData,
-    EfiBootServicesCode,
-    EfiBootServicesData,
-    EfiRuntimeServicesCode,
-    EfiRuntimeServicesData,
-    EfiConventionalMemory,
-    EfiUnusableMemory,
-    EfiACPIReclaimMemory,
-    EfiACPIMemoryNVS,
-    EfiMemoryMappedIO,
-    EfiMemoryMappedIOPortSpace,
-    EfiPalCode,
-    EfiPersistentMemory,
-    EfiUnacceptedMemoryType,
-    EfiMaxMemoryType
-} EFI_MEMORY_TYPE;
-
 typedef 
 EFI_STATUS
 (EFIAPI *EFI_IMAGE_UNLOAD) (

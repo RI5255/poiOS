@@ -10,6 +10,7 @@ void efi_main(void *image_handle, EFI_SYSTEM_TABLE *system_table) {
     EFI_HANDLE image;
     efi_init(image_handle, system_table);
 
+    /*
     // hello.efiをロードして実行してみる
     status = ST->BootServices->OpenProtocol(
             image_handle, 
@@ -48,7 +49,7 @@ void efi_main(void *image_handle, EFI_SYSTEM_TABLE *system_table) {
     status = ST->BootServices->StartImage(image, NULL, NULL);
     assert(status, L"StartImage");
     
-    while(TRUE);
+    while(TRUE);*/
     
     shell(image_handle);
 }
