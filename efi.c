@@ -220,10 +220,10 @@ void efi_init(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     status = STIEP->UnregisterKeyNotify(STIEP, notify_handle);
     assert(status, L"STIEP->UnregisterNotify");
 
-    // Modeを変えてみる
+    /* Modeを変えてみる
     puts(L"Switching Mode...\r\n");
     status = ST->ConOut->SetMode(ST->ConOut, 3);
-    assert(status, L"ST->ConOut->SetMode");
+    assert(status, L"ST->ConOut->SetMode");*/
 
     STIEP->Reset(STIEP, FALSE);
     ST->ConOut->ClearScreen(ST->ConOut);

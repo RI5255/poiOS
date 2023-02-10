@@ -149,6 +149,57 @@ void edit(EFI_HANDLE image_handle, CHAR16 *file_name) {
 
 }
 
+void run(EFI_HANDLE image_handle) {
+    EFI_STATUS status;
+    EFI_LOADED_IMAGE_PROTOCOL *lip;
+    EFI_DEVICE_PATH_PROTOCOL *dev_path, *dev_node, *dev_path_merged;
+    EFI_HANDLE image;
+
+    // hello.efiをロードして実行してみる
+    status = ST->BootServices->OpenProtocol(
+            image_handle, 
+            &LIP_GUID,
+            (VOID **)&lip,
+            image_handle,
+            NULL,
+            EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+    assert(status, L"Failed to Open LIP");
+
+    status = ST->BootServices->OpenProtocol(
+        lip->DeviceHandle,
+        &DPP_GUID,
+        (VOID **)&dev_path,
+        image_handle,
+        NULL,
+        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+    assert(status, L"Failed to Open DPP");
+    
+    dev_node = DPFTP->ConvertTextToDeviceNode(L"hello.efi");
+    dev_path_merged = DPUP->AppendDeviceNode(dev_path, dev_node);
+
+    status = ST->BootServices->LoadImage(
+            FALSE, 
+            image_handle, 
+            dev_path_merged, 
+            NULL, 
+            0,
+            &image);
+    assert(status, L"LoadImage");
+
+    puts(L"Loaded image: ");
+    puts(DPTTP->ConvertDevicePathToText(dev_path_merged, FALSE, FALSE));
+    puts(L"\r\n");
+    puts(L"push 'e' to execute");
+    puts(L"\r\n");
+
+    while(getc() != L'e');
+
+    status = ST->BootServices->StartImage(image, NULL, NULL);
+    assert(status, L"StartImage");
+
+    while(TRUE);
+}
+
 void shell(EFI_HANDLE image_handle) {
     UINT16 cmd[MAX_COMMAND_LEN];
     struct RECT r = {10, 10, 100, 200};
@@ -176,6 +227,10 @@ void shell(EFI_HANDLE image_handle) {
             cat(image_handle, L"abc");
         else if(!strcmp(L"edit", cmd))
             edit(image_handle, L"abc");
+        else if(!strcmp(L"run", cmd)){
+            run(image_handle);
+            ST->ConOut->ClearScreen(ST->ConOut);
+        }
         else if(!strcmp(L"exit", cmd))
             is_exit = TRUE;
         else if(!strcmp(L"shutdown", cmd))
