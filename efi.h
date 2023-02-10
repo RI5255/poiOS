@@ -16,6 +16,9 @@ typedef UINTN EFI_STATUS;
 typedef VOID* EFI_HANDLE;
 typedef VOID* EFI_EVENT;
 typedef UINTN EFI_TPL;
+typedef UINT64 EFI_PHYSICAL_ADDRESS;
+typedef UINT64 EFI_VIRTUAL_ADDRESS;
+
 #define EFIAPI 
 #define IN 
 #define OUT 
@@ -272,6 +275,29 @@ typedef struct {
 } EFI_DEVICE_PATH_UTLITIES_PROTOCOL;
 
 // EFI_BOOT_SERVICES
+typedef struct {
+    UINT32                  Type;
+    EFI_PHYSICAL_ADDRESS    PhysicalStart;
+    EFI_VIRTUAL_ADDRESS     VirtualStart;
+    UINT64                  NumberOfPages;
+    UINT64                  Attribute;
+} EFI_MEMORY_DESCRIPTOR;
+
+/*
+@param MemoryMapSize    MemoryMapを格納するbufferのサイズ。書き込まれたサイズが返る。
+@param MemoryMap        MemoryMapを書き込むアドレス
+@param MapKey           MemoryMapを識別するための値を格納する場所を指定。
+*/
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_GET_MEMORY_MAP) (
+    IN OUT UINTN                *MemoryMapSize,
+    OUT EFI_MEMORY_DESCRIPTOR   *MemoryMap,
+    OUT UINTN                   *MapKey,
+    OUT UINTN                   *DescriptorSize,
+    OUT UINT32                  *DescriptorVersion
+);
+
 typedef enum {
     EfiReservedMemoryType,
     EfiLoaderCode,
@@ -456,9 +482,10 @@ typedef struct {
     char _pad1[40];
 
     // Memory Services
-    char _pad2[24];
-    EFI_ALLOCATE_POOL AllocatePool;
-    EFI_FREE_POOL FreePool;
+    char _pad2[16];
+    EFI_GET_MEMORY_MAP  GetMemoryMap;
+    EFI_ALLOCATE_POOL   AllocatePool;
+    EFI_FREE_POOL       FreePool;
 
     // Event & Timer Services
     EFI_CREATE_EVENT CreateEvent;
@@ -544,8 +571,6 @@ typedef struct {
     UINT8 Red;
     UINT8 Reserved;
 } EFI_GRAPHICS_OUTPUT_BLT_PIXEL;
-
-typedef UINT64 EFI_PHYSICAL_ADDRESS;
 
 typedef struct {
     UINT32 RedMask;

@@ -4,6 +4,7 @@
 #include "graphics.h"
 #include "gui.h"
 #include "file.h"
+#include "mem.h"
 
 #define MAX_COMMAND_LEN 100
 
@@ -200,6 +201,35 @@ void run(EFI_HANDLE image_handle) {
     while(TRUE);
 }
 
+void memmap(void) {
+    EFI_STATUS status;
+    UINT8 *memmap;
+    UINTN num_ent, ent_size;
+
+    status = get_memmap(&memmap, &num_ent, &ent_size);
+    assert(status, L"get_memmap");
+
+    puts(L"memmap has ");
+    puth(num_ent, sizeof(num_ent));
+    puts(L" entries\r\n");
+    
+    // とりあえずTypeがEfiConventionalMemoryのもののみを表示する。
+    puts(L"Type PhysicalStart NumberOfPages\r\n");
+    for(UINTN i = 0; i < num_ent; i++) {
+        EFI_MEMORY_DESCRIPTOR *d = (EFI_MEMORY_DESCRIPTOR*)(memmap + ent_size * i);
+        if(d->Type != EfiConventionalMemory) continue;
+        puth(d->Type, sizeof(d->Type));
+        puts(L" 0x");
+        puth(d->PhysicalStart, sizeof(d->PhysicalStart));
+        puts(L" ");
+        puth(d->NumberOfPages, sizeof(d->NumberOfPages));
+        puts(L"\r\n");
+    }
+
+    status = ST->BootServices->FreePool((VOID*)memmap);
+    assert(status, L"FreePool");
+}
+
 void shell(EFI_HANDLE image_handle) {
     UINT16 cmd[MAX_COMMAND_LEN];
     struct RECT r = {10, 10, 100, 200};
@@ -231,6 +261,8 @@ void shell(EFI_HANDLE image_handle) {
             run(image_handle);
             ST->ConOut->ClearScreen(ST->ConOut);
         }
+        else if(!strcmp(L"memmap", cmd))
+            memmap();
         else if(!strcmp(L"exit", cmd))
             is_exit = TRUE;
         else if(!strcmp(L"shutdown", cmd))
