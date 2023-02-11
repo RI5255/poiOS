@@ -433,6 +433,15 @@ EFI_STATUS
 
 typedef 
 EFI_STATUS
+(EFIAPI *EFI_EXIT) (
+    IN EFI_HANDLE   ImageHandle,
+    IN EFI_STATUS   ExitStatus,
+    IN UINTN        ExitDataSize,
+    IN CHAR16       *ExitData OPTIONAL
+);
+
+typedef 
+EFI_STATUS
 (EFIAPI *EFI_SET_WATCHDOG_TIMER) (
     IN UINTN Timeout, // これを0にすると無効化できる。その他の引数は0かNULLでいい。
     IN UINT64 WatchdogCode,
@@ -499,7 +508,8 @@ typedef struct {
     // Image Services
     EFI_IMAGE_LOAD LoadImage;
     EFI_IMAGE_START StartImage;
-    char _pad7[24];
+    EFI_EXIT        Exit;
+    char _pad7[16];
 
     // Miscellaeous Services 
     char _pad8[16];

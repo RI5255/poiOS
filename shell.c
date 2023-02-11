@@ -197,8 +197,6 @@ void run(EFI_HANDLE image_handle) {
 
     status = ST->BootServices->StartImage(image, NULL, NULL);
     assert(status, L"StartImage");
-
-    while(TRUE);
 }
 
 void memmap(void) {
@@ -259,7 +257,6 @@ void shell(EFI_HANDLE image_handle) {
             edit(image_handle, L"abc");
         else if(!strcmp(L"run", cmd)){
             run(image_handle);
-            ST->ConOut->ClearScreen(ST->ConOut);
         }
         else if(!strcmp(L"memmap", cmd))
             memmap();
